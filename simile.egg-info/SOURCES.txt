@@ -1,0 +1,17 @@
+LICENSE
+MANIFEST.in
+README.md
+setup.py
+simile/__init__.py
+simile/api_requestor.py
+simile/config.py
+simile/error.py
+simile/resource_agent.py
+simile/resource_population.py
+simile/task.py
+simile/utils.py
+simile.egg-info/PKG-INFO
+simile.egg-info/SOURCES.txt
+simile.egg-info/dependency_links.txt
+simile.egg-info/requires.txt
+simile.egg-info/top_level.txt
