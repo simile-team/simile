@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="simile",  # Replace with your desired package name
-    version="0.1.0",
+    version="0.1.1",
     author="Joon Sung Park",
     author_email="joon.s.pk@gmail.com",
     description="A Python client library for interacting with my Agent & Population endpoints",

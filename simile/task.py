@@ -6,6 +6,7 @@ class Task:
     """
     Represents an asynchronous Celery-like task. 
     Contains logic for polling the result endpoint until completion or failure.
+    Used internally to hide the async nature from the end user.
     """
     def __init__(self, task_id, result_endpoint):
         self.task_id = task_id
@@ -55,8 +56,7 @@ class Task:
             self._finished = True
             self._last_result = data.get("error")
         else:
-            # Some other custom statuses
-            # We'll treat them like "still running"
+            # Some other custom statuses are treated as "still running"
             pass
 
     def wait(self, interval=2, timeout=300):
@@ -70,7 +70,9 @@ class Task:
             if self._finished:
                 break
             if time.time() - start > timeout:
-                raise TimeoutError(f"Task {self.task_id} did not complete within {timeout} seconds.")
+                raise TimeoutError(
+                    f"Task {self.task_id} did not complete within {timeout} seconds."
+                )
             time.sleep(interval)
 
         if self._last_status == "SUCCESS":

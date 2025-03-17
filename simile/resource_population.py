@@ -1,6 +1,7 @@
 # simile/resource_population.py
 """
-Implements Population-related methods: create, get_agents, add_agent, remove_agent, delete, etc.
+Implements Population-related methods.
+Some are synchronous; get_sub_population is async but we now hide the wait.
 """
 
 from .api_requestor import request
@@ -9,12 +10,37 @@ from .error import RequestError
 
 class Population:
     @staticmethod
-    def create(name="New Population"):
+    def create(name, read_permission="private", write_permission="private", readme=""):
         """
         Synchronously create a population via POST /create_population/.
-        Returns a dict { "status": "success", "population_id": "..." } or raises an error.
+        
+        Required fields:
+          - name
+          - read_permission
+          - write_permission
+        Optional:
+          - readme
+
+        Returns:
+            {
+              "status": "success",
+              "population_id": "..."
+            }
+        or raises an error.
         """
-        payload = {"name": name}
+        if not name:
+            raise ValueError("name is required.")
+        if not read_permission:
+            raise ValueError("read_permission is required.")
+        if not write_permission:
+            raise ValueError("write_permission is required.")
+
+        payload = {
+            "name": name,
+            "read_permission": read_permission,
+            "write_permission": write_permission,
+            "readme": readme
+        }
         resp = request("POST", "/create_population/", json=payload)
         return resp.json()
 
@@ -65,23 +91,29 @@ class Population:
         return resp.json()
 
     @staticmethod
-    def create_sub_population(population_id="", n=1):
+    def get_sub_population(population_id="", n=1):
         """
-        Asynchronously create a sub-population by sampling from an existing population
-        or from all agents if no population_id is given.
-        Endpoint: POST /create_sub_population/
-        Returns a Task object. On success, final data should have "new_population_id".
+        Initiates a sub-population retrieval/generation (blocking call) by sampling
+        from an existing population (if population_id is provided) or from all
+        agents if no population_id is given.
+
+        Endpoint: POST /get_sub_population/
+        Waits until the async task completes, then returns final result, typically
+        containing "new_population_id".
         """
         payload = {
             "population_id": population_id,
             "n": n
         }
-        resp = request("POST", "/create_sub_population/", json=payload)
+        resp = request("POST", "/get_sub_population/", json=payload)
         data = resp.json()
         task_id = data.get("task_id")
         if not task_id:
-            raise RequestError("No 'task_id' returned from create_sub_population endpoint.")
+            raise RequestError("No 'task_id' returned from get_sub_population endpoint.")
 
-        # The result endpoint is /create_sub_population_result/<task_id>/
-        result_endpoint = "/create_sub_population_result/{task_id}/"
-        return Task(task_id, result_endpoint)
+        # The result endpoint is /get_sub_population_result/<task_id>/
+        result_endpoint = "/get_sub_population_result/{task_id}/"
+
+        # Wait for completion and return the final result
+        final_data = Task(task_id, result_endpoint).wait()
+        return final_data
